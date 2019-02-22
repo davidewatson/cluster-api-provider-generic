@@ -21,10 +21,10 @@ import (
 	"os"
 
 	"github.com/cattlek8s/cluster-api-provider-generic/pkg/apis"
-	"github.com/cattlek8s/cluster-api-provider-generic/pkg/controller"
+	"github.com/cattlek8s/cluster-api-provider-generic/pkg/cloud/generic/actuators/cluster"
+	"github.com/cattlek8s/cluster-api-provider-generic/pkg/cloud/generic/actuators/machine"
 	"github.com/cattlek8s/cluster-api-provider-generic/pkg/webhook"
 	clusterapis "sigs.k8s.io/cluster-api/pkg/apis"
-	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
 	"sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset"
 	capicluster "sigs.k8s.io/cluster-api/pkg/controller/cluster"
 	capimachine "sigs.k8s.io/cluster-api/pkg/controller/machine"
