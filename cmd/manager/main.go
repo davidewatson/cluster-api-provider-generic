@@ -23,7 +23,11 @@ import (
 	"github.com/cattlek8s/cluster-api-provider-generic/pkg/apis"
 	"github.com/cattlek8s/cluster-api-provider-generic/pkg/controller"
 	"github.com/cattlek8s/cluster-api-provider-generic/pkg/webhook"
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	clusterapis "sigs.k8s.io/cluster-api/pkg/apis"
+	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
+	"sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset"
+	capicluster "sigs.k8s.io/cluster-api/pkg/controller/cluster"
+	capimachine "sigs.k8s.io/cluster-api/pkg/controller/machine"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -62,12 +66,37 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Setup all Controllers
-	log.Info("Setting up controller")
-	if err := controller.AddToManager(mgr); err != nil {
-		log.Error(err, "unable to register controllers to the manager")
+	if err := clusterapis.AddToScheme(mgr.GetScheme()); err != nil {
+		log.Error(err, "unable add Cluster APIs to scheme")
 		os.Exit(1)
 	}
+
+	// Setup all Controllers
+	log.Info("Setting up controller")
+	cs, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		log.Error(err, "unable to get clientset for config")
+		os.Exit(1)
+	}
+
+	clusterActuator, err := cluster.NewActuator(cluster.ActuatorParams{
+		ClustersGetter: cs.ClusterV1alpha1(),
+	})
+	if err != nil {
+		log.Error(err, "unable to get create cluster actuator")
+		os.Exit(1)
+	}
+
+	machineActuator, err := machine.NewActuator(machine.ActuatorParams{
+		MachinesGetter: cs.ClusterV1alpha1(),
+	})
+	if err != nil {
+		log.Error(err, "unable to get create machine actuator")
+		os.Exit(1)
+	}
+
+	capimachine.AddWithActuator(mgr, machineActuator)
+	capicluster.AddWithActuator(mgr, clusterActuator)
 
 	log.Info("setting up webhooks")
 	if err := webhook.AddToManager(mgr); err != nil {
