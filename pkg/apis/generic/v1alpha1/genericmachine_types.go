@@ -23,14 +23,14 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// GenericClusterProviderSpecSpec defines the desired state of GenericClusterProviderSpec
-type GenericClusterProviderSpecSpec struct {
+// GenericMachineSpec defines the desired state of GenericMachine
+type GenericMachineSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-// GenericClusterProviderSpecStatus defines the observed state of GenericClusterProviderSpec
-type GenericClusterProviderSpecStatus struct {
+// GenericMachineStatus defines the observed state of GenericMachine
+type GenericMachineStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -38,25 +38,25 @@ type GenericClusterProviderSpecStatus struct {
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// GenericClusterProviderSpec is the Schema for the genericclusterproviderspecs API
+// GenericMachine is the Schema for the genericmachines API
 // +k8s:openapi-gen=true
-type GenericClusterProviderSpec struct {
+type GenericMachine struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   GenericClusterProviderSpecSpec   `json:"spec,omitempty"`
-	Status GenericClusterProviderSpecStatus `json:"status,omitempty"`
+	Spec   GenericMachineSpec   `json:"spec,omitempty"`
+	Status GenericMachineStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// GenericClusterProviderSpecList contains a list of GenericClusterProviderSpec
-type GenericClusterProviderSpecList struct {
+// GenericMachineList contains a list of GenericMachine
+type GenericMachineList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []GenericClusterProviderSpec `json:"items"`
+	Items           []GenericMachine `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&GenericClusterProviderSpec{}, &GenericClusterProviderSpecList{})
+	SchemeBuilder.Register(&GenericMachine{}, &GenericMachineList{})
 }
