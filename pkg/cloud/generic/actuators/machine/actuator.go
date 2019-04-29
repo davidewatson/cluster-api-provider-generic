@@ -70,6 +70,14 @@ func (a *Actuator) Update(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 // Exists test for the existance of a machine and is invoked by the Machine Controller
 func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machine *clusterv1.Machine) (bool, error) {
+	// Exists is only called if a Machine resource exists. It is a
+	// configuration error if a Cluster does not exists in the same
+	// namespace as the Machine. By returning an error here we ensure
+	// the resource will be requeued for processing later.
+	if cluster == nil {
+		return false, fmt.Errorf("machine %s does not have cluster in namespace %s", machine.Name, machine.Namespace)
+	}
+
 	log.Printf("Checking if machine %v for cluster %v exists.", machine.Name, cluster.Name)
 	return false, fmt.Errorf("TODO: Not yet implemented")
 }
