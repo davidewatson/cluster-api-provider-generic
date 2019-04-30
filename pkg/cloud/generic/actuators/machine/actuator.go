@@ -119,5 +119,5 @@ func (a *Actuator) Exists(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	log.Printf("Checking if machine %v for cluster %v exists.", machine.Name, cluster.Name)
 
-	return false, nil
+	return machine.Spec.ProviderID != nil, nil
 }
