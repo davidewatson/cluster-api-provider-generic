@@ -61,6 +61,17 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 	}
 
 	log.Printf("Creating machine %v for cluster %v.", machine.Name, cluster.Name)
+
+	providerID := fmt.Sprintf("%s-%s", cluster.Name, machine.Name)
+	machine.Spec.ProviderID = &providerID
+	machine, err := a.machinesGetter.Machines(machine.Namespace).Update(machine)
+	if err != nil {
+		log.Printf("Failed to set Machine.Spec.ProviderID %s: %v", providerID, err)
+		return fmt.Errorf("failed to set Machine.Spec.ProviderID %s: %v", providerID, err)
+	}
+
+	// TODO: Call webhook to allocate infrastruction
+
 	return nil
 }
 
@@ -71,6 +82,20 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 	}
 
 	log.Printf("Deleting machine %v for cluster %v.", machine.Name, cluster.Name)
+
+	if machine.Spec.ProviderID == nil {
+		log.Printf("Machine %s-%s does not have ProviderID so there is nothing to delete", cluster.Name, machine.Name)
+		return nil
+	}
+
+	// TODO: Call webhook to release infrastructure
+
+	machine.Spec.ProviderID = nil
+	machine, err := a.machinesGetter.Machines(machine.Namespace).Update(machine)
+	if err != nil {
+		log.Printf("Failed to clear Machine.Spec.ProviderID %s-%s: %v", cluster.Name, machine.Name, err)
+		return fmt.Errorf("failed to clear Machine.Spec.ProviderID for %s-%s: %v", cluster.Name, machine.Name, err)
+	}
 
 	return nil
 }
