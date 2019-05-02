@@ -18,9 +18,11 @@ package machine
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 
+	"k8s.io/apimachinery/pkg/types"
 	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 	client "sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1"
 )
@@ -62,15 +64,34 @@ func (a *Actuator) Create(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	log.Printf("Creating machine %v for cluster %v.", machine.Name, cluster.Name)
 
-	providerID := fmt.Sprintf("%s-%s", cluster.Name, machine.Name)
-	machine.Spec.ProviderID = &providerID
-	machine, err := a.machinesGetter.Machines(machine.Namespace).Update(machine)
-	if err != nil {
-		log.Printf("Failed to set Machine.Spec.ProviderID %s: %v", providerID, err)
-		return fmt.Errorf("failed to set Machine.Spec.ProviderID %s: %v", providerID, err)
+	if err := a.patchProviderID(cluster, machine); err != nil {
+		log.Printf("Failed to patch ProviderID for machine %s %s: %v", cluster.Name, machine.Name, err)
+		return fmt.Errorf("failed to patch ProviderID for machine %s %s: %v", cluster.Name, machine.Name, err)
 	}
 
 	// TODO: Call webhook to allocate infrastruction
+
+	return nil
+}
+
+type patchString struct {
+	Op    string `json:"op"`
+	Path  string `json:"path"`
+	Value string `json:"value"`
+}
+
+func (a *Actuator) patchProviderID(cluster *clusterv1.Cluster, machine *clusterv1.Machine) error {
+	providerID := fmt.Sprintf("%s-%s", cluster.Name, machine.Name)
+
+	patch, _ := json.Marshal([]patchString{
+		patchString{
+			Op:    "replace",
+			Path:  "/spec/providerID",
+			Value: providerID}})
+
+	if _, err := a.machinesGetter.Machines(machine.Namespace).Patch(machine.Name, types.JSONPatchType, patch); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -90,12 +111,7 @@ func (a *Actuator) Delete(ctx context.Context, cluster *clusterv1.Cluster, machi
 
 	// TODO: Call webhook to release infrastructure
 
-	machine.Spec.ProviderID = nil
-	machine, err := a.machinesGetter.Machines(machine.Namespace).Update(machine)
-	if err != nil {
-		log.Printf("Failed to clear Machine.Spec.ProviderID %s-%s: %v", cluster.Name, machine.Name, err)
-		return fmt.Errorf("failed to clear Machine.Spec.ProviderID for %s-%s: %v", cluster.Name, machine.Name, err)
-	}
+	// ProviderID is not updated to be nil since after returning this resource should be deleted.
 
 	return nil
 }
